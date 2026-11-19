@@ -1,0 +1,303 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Primitives ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string && val.size() >= 1 && val.size() <= maxLen;
+    }
+
+    function isOptionalString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    // --- Entity Blueprints ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'email', 'companyName',
+          'brandTagline', 'defaultCurrency', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'companyName',
+          'brandTagline', 'defaultCurrency', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == request.auth.uid
+        && isValidId(data.uid)
+        && isNonEmptyString(data.displayName, 120)
+        && isNonEmptyString(data.email, 200)
+        && isNonEmptyString(data.companyName, 120)
+        && isOptionalString(data.brandTagline, 200)
+        && data.defaultCurrency in ['SAR', 'AED', 'USD']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidClient(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'companyName', 'contactName', 'industry',
+          'email', 'phone', 'notes', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'companyName', 'contactName', 'industry',
+          'email', 'phone', 'notes', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerUid == request.auth.uid
+        && isValidId(data.ownerUid)
+        && isNonEmptyString(data.companyName, 140)
+        && isNonEmptyString(data.contactName, 120)
+        && isNonEmptyString(data.industry, 80)
+        && isOptionalString(data.email, 200)
+        && isOptionalString(data.phone, 40)
+        && isOptionalString(data.notes, 1000)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidScopeItem(item) {
+      return item is map
+        && item.keys().hasAll(['title', 'deliverable', 'weeks'])
+        && item.keys().hasOnly(['title', 'deliverable', 'weeks'])
+        && isNonEmptyString(item.title, 140)
+        && isNonEmptyString(item.deliverable, 500)
+        && item.weeks is int
+        && item.weeks >= 1
+        && item.weeks <= 104;
+    }
+
+    function isValidPackage(pkg) {
+      return pkg is map
+        && pkg.keys().hasAll(['tier', 'name', 'price', 'deliveryWeeks', 'features', 'recommended'])
+        && pkg.keys().hasOnly(['tier', 'name', 'price', 'deliveryWeeks', 'features', 'recommended'])
+        && pkg.tier in ['basic', 'pro', 'enterprise']
+        && isNonEmptyString(pkg.name, 100)
+        && (pkg.price is int || pkg.price is float)
+        && pkg.price >= 0
+        && pkg.price <= 100000000
+        && pkg.deliveryWeeks is int
+        && pkg.deliveryWeeks >= 1
+        && pkg.deliveryWeeks <= 104
+        && pkg.recommended is bool
+        && pkg.features is list
+        && pkg.features.size() >= 1
+        && pkg.features.size() <= 10
+        && isNonEmptyString(pkg.features[0], 200);
+    }
+
+    function isValidRoiAssumptions(roi) {
+      return roi is map
+        && roi.keys().hasAll(['monthlyHoursSaved', 'hourlyRate', 'monthlyRevenueLift'])
+        && roi.keys().hasOnly(['monthlyHoursSaved', 'hourlyRate', 'monthlyRevenueLift'])
+        && (roi.monthlyHoursSaved is int || roi.monthlyHoursSaved is float)
+        && roi.monthlyHoursSaved >= 0
+        && roi.monthlyHoursSaved <= 10000
+        && (roi.hourlyRate is int || roi.hourlyRate is float)
+        && roi.hourlyRate >= 0
+        && roi.hourlyRate <= 50000
+        && (roi.monthlyRevenueLift is int || roi.monthlyRevenueLift is float)
+        && roi.monthlyRevenueLift >= 0
+        && roi.monthlyRevenueLift <= 100000000;
+    }
+
+    function isValidProposal(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'clientId', 'clientName', 'title', 'industry',
+          'currency', 'status', 'brief', 'executiveSummary', 'scopeItems',
+          'timelineWeeks', 'packages', 'selectedPackageIndex',
+          'roiAssumptions', 'dealValue', 'termsNote', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'clientId', 'clientName', 'title', 'industry',
+          'currency', 'status', 'brief', 'executiveSummary', 'scopeItems',
+          'timelineWeeks', 'packages', 'selectedPackageIndex',
+          'roiAssumptions', 'dealValue', 'termsNote', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerUid == request.auth.uid
+        && isValidId(data.ownerUid)
+        && isValidId(data.clientId)
+        && isNonEmptyString(data.clientName, 140)
+        && isNonEmptyString(data.title, 180)
+        && isNonEmptyString(data.industry, 80)
+        && data.currency in ['SAR', 'AED', 'USD']
+        && data.status in ['draft', 'sent', 'negotiating', 'accepted', 'rejected']
+        && isNonEmptyString(data.brief, 4000)
+        && isNonEmptyString(data.executiveSummary, 3000)
+        && data.scopeItems is list
+        && data.scopeItems.size() >= 1
+        && data.scopeItems.size() <= 12
+        && isValidScopeItem(data.scopeItems[0])
+        && data.timelineWeeks is int
+        && data.timelineWeeks >= 1
+        && data.timelineWeeks <= 104
+        && data.packages is list
+        && data.packages.size() >= 1
+        && data.packages.size() <= 3
+        && isValidPackage(data.packages[0])
+        && (data.packages.size() < 2 || isValidPackage(data.packages[1]))
+        && (data.packages.size() < 3 || isValidPackage(data.packages[2]))
+        && data.selectedPackageIndex is int
+        && data.selectedPackageIndex >= 0
+        && data.selectedPackageIndex < data.packages.size()
+        && isValidRoiAssumptions(data.roiAssumptions)
+        && (data.dealValue is int || data.dealValue is float)
+        && data.dealValue >= 0
+        && data.dealValue <= 100000000
+        && isOptionalString(data.termsNote, 1500)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFollowup(data) {
+      return data.keys().hasAll([
+          'ownerUid', 'channel', 'objectionSummary', 'subject', 'message', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerUid', 'channel', 'objectionSummary', 'subject', 'message', 'createdAt'
+        ])
+        && data.ownerUid == request.auth.uid
+        && isValidId(data.ownerUid)
+        && data.channel in ['whatsapp', 'email', 'objection']
+        && isOptionalString(data.objectionSummary, 400)
+        && isNonEmptyString(data.subject, 200)
+        && isNonEmptyString(data.message, 4000)
+        && data.createdAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'email', 'companyName', 'brandTagline', 'defaultCurrency', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /clients/{clientId} {
+      allow get: if isSignedIn() && isValidId(clientId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(clientId)
+        && isValidClient(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(clientId)
+        && existing().ownerUid == request.auth.uid
+        && isValidClient(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'companyName', 'contactName', 'industry', 'email', 'phone', 'notes', 'updatedAt'
+        ]);
+      allow delete: if isVerifiedUser()
+        && isValidId(clientId)
+        && existing().ownerUid == request.auth.uid;
+    }
+
+    match /proposals/{proposalId} {
+      allow get: if isSignedIn() && isValidId(proposalId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(proposalId)
+        && isValidProposal(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          incoming().clientId == 'standalone'
+          || (
+            exists(/databases/$(database)/documents/clients/$(incoming().clientId))
+            && get(/databases/$(database)/documents/clients/$(incoming().clientId)).data.ownerUid == request.auth.uid
+          )
+        );
+      allow update: if isVerifiedUser()
+        && isValidId(proposalId)
+        && existing().ownerUid == request.auth.uid
+        && existing().status != 'accepted'
+        && existing().status != 'rejected'
+        && isValidProposal(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'selectedPackageIndex', 'dealValue', 'updatedAt'
+          ])
+          ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'clientId', 'clientName', 'title', 'industry', 'currency', 'status',
+            'brief', 'executiveSummary', 'scopeItems', 'timelineWeeks',
+            'packages', 'selectedPackageIndex', 'roiAssumptions', 'dealValue',
+            'termsNote', 'updatedAt'
+          ])
+        );
+      allow delete: if isVerifiedUser()
+        && isValidId(proposalId)
+        && existing().ownerUid == request.auth.uid;
+
+      match /followups/{followupId} {
+        allow get: if isSignedIn()
+          && isValidId(proposalId)
+          && isValidId(followupId)
+          && existing().ownerUid == request.auth.uid;
+        allow list: if isSignedIn()
+          && isValidId(proposalId)
+          && existing().ownerUid == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(proposalId)
+          && isValidId(followupId)
+          && isValidFollowup(incoming())
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/proposals/$(proposalId))
+          && get(/databases/$(database)/documents/proposals/$(proposalId)).data.ownerUid == request.auth.uid;
+        allow update: if false;
+        allow delete: if isVerifiedUser()
+          && isValidId(proposalId)
+          && isValidId(followupId)
+          && existing().ownerUid == request.auth.uid
+          && exists(/databases/$(database)/documents/proposals/$(proposalId))
+          && get(/databases/$(database)/documents/proposals/$(proposalId)).data.ownerUid == request.auth.uid;
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-display: "Cairo", system-ui, sans-serif;
+    --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+    --obsidian: #08080a;
+    --onyx: #111216;
+    --onyx-elevated: #171920;
+    --champagne: #d4a853;
+    --champagne-bright: #e5be72;
+    --ivory: #f5f3ee;
+    --pewter: #9a9891;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--obsidian);
+    color: var(--ivory);
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.surface-ambient {
+  background-image: radial-gradient(
+    ellipse 75% 45% at 50% -12%,
+    rgba(212, 168, 83, 0.08),
+    transparent 70%
+  );
+}
+
+/* Custom scrollbar for warm obsidian workspace */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #08080a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #24262f;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3b3e4c;
+}
+
+/* Executive print stylesheet for exporting client proposals to PDF */
+@media print {
+  body {
+    background: #08080a !important;
+    color: #f5f3ee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-full {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated workspace owner profile and default commercial branding preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the workspace owner."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Full display name of the user."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 200,
+          "description": "Private user email address."
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Agency or business name shown on proposals."
+        },
+        "brandTagline": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Short positioning tagline printed on executive proposals."
+        },
+        "defaultCurrency": {
+          "type": "string",
+          "enum": ["SAR", "AED", "USD"],
+          "description": "Preferred commercial currency."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "email", "companyName", "brandTagline", "defaultCurrency", "createdAt", "updatedAt"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "B2B client organization and primary decision-maker record owned by a workspace user.",
+      "type": "object",
+      "properties": {
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "contactName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "industry": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerUid", "companyName", "contactName", "industry", "email", "phone", "notes", "createdAt", "updatedAt"]
+    },
+    "Proposal": {
+      "title": "Proposal",
+      "description": "AI-assisted commercial proposal with 3-tier pricing packages, ROI assumptions, and deal tracking.",
+      "type": "object",
+      "properties": {
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 180
+        },
+        "industry": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "currency": {
+          "type": "string",
+          "enum": ["SAR", "AED", "USD"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "sent", "negotiating", "accepted", "rejected"]
+        },
+        "brief": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 4000
+        },
+        "executiveSummary": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 3000
+        },
+        "scopeItems": {
+          "type": "array",
+          "description": "Bounded list of deliverable milestones (max 12)."
+        },
+        "timelineWeeks": {
+          "type": "integer"
+        },
+        "packages": {
+          "type": "array",
+          "description": "Bounded list of 1 to 3 tiered pricing packages."
+        },
+        "selectedPackageIndex": {
+          "type": "integer"
+        },
+        "roiAssumptions": {
+          "type": "object",
+          "properties": {
+            "monthlyHoursSaved": { "type": "number" },
+            "hourlyRate": { "type": "number" },
+            "monthlyRevenueLift": { "type": "number" }
+          },
+          "required": ["monthlyHoursSaved", "hourlyRate", "monthlyRevenueLift"]
+        },
+        "dealValue": {
+          "type": "number"
+        },
+        "termsNote": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerUid",
+        "clientId",
+        "clientName",
+        "title",
+        "industry",
+        "currency",
+        "status",
+        "brief",
+        "executiveSummary",
+        "scopeItems",
+        "timelineWeeks",
+        "packages",
+        "selectedPackageIndex",
+        "roiAssumptions",
+        "dealValue",
+        "termsNote",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Followup": {
+      "title": "Followup",
+      "description": "Saved WhatsApp/Email follow-up pitch or objection-handling reply linked to a parent proposal.",
+      "type": "object",
+      "properties": {
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "channel": {
+          "type": "string",
+          "enum": ["whatsapp", "email", "objection"]
+        },
+        "objectionSummary": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 4000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerUid", "channel", "objectionSummary", "subject", "message", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user workspace profiles strictly isolated to the owning user."
+    },
+    "/clients/{clientId}": {
+      "schema": { "$ref": "#/entities/Client" },
+      "description": "B2B client records owned and queried strictly by ownerUid."
+    },
+    "/proposals/{proposalId}": {
+      "schema": { "$ref": "#/entities/Proposal" },
+      "description": "Commercial proposals owned and queried strictly by ownerUid."
+    },
+    "/proposals/{proposalId}/followups/{followupId}": {
+      "schema": { "$ref": "#/entities/Followup" },
+      "description": "Saved objection replies and follow-up messages governed by parent proposal ownership."
+    }
+  }
+}
